@@ -158,3 +158,71 @@ SELECT winner, subject
 FROM nobel
 WHERE yr=1984
 ORDER BY subject IN ('Physics','Chemistry'), subject, winner;
+
+-- SELECT within SELECT
+
+-- Bigger than Russia
+SELECT name FROM world
+  WHERE population >
+     (SELECT population FROM world
+      WHERE name='Russia');
+
+-- Richer than UK
+SELECT name
+FROM world
+WHERE (gdp/population) > 
+    (SELECT (gdp/population) FROM world 
+    WHERE name = 'United Kingdom') AND continent = 'Europe';
+
+-- Neighbours of Argentina or Australia
+SELECT name, continent
+FROM world
+WHERE continent = (SELECT continent FROM world WHERE name = 'Argentina') 
+OR continent = (SELECT continent FROM world WHERE name = 'Australia')
+ORDER BY name;
+
+-- Between Canada and Poland
+SELECT name
+FROM world
+WHERE population > (SELECT population FROM world WHERE name = 'Canada') 
+AND population < (SELECT population FROM world WHERE name = 'Poland');
+
+-- Percentages of Germany
+SELECT name, CONCAT(ROUND(population/(SELECT population FROM world 
+WHERE name = 'Germany') * 100), '%') AS percentage
+FROM world
+WHERE continent = 'Europe';
+
+-- Bigger than every country in Europe
+SELECT name
+FROM world
+WHERE gdp > ALL(SELECT gdp 
+                FROM world 
+                WHERE continent = 'Europe' AND gdp IS NOT NULL);
+
+-- Largest in each continent
+SELECT continent, name, area FROM world x
+  WHERE area >= ALL
+    (SELECT area FROM world y
+        WHERE y.continent=x.continent
+          AND area>0);
+
+-- First country of each continent (alphabetically)
+SELECT continent, name
+FROM world x
+WHERE name = (SELECT name FROM world y
+              WHERE y.continent = x.continent
+              ORDER BY name LIMIT 1);
+
+-- 9
+SELECT name, continent, population
+FROM world
+WHERE continent = ANY (SELECT continent
+FROM world a
+WHERE 25000000 >= ALL (SELECT population FROM world b WHERE a.continent = b.continent));
+
+-- 10
+SELECT name, continent
+FROM world x
+WHERE population > ALL (SELECT (3*population) FROM world y 
+WHERE x.continent = y.continent AND x.name != y.name);
