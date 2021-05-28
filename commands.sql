@@ -336,3 +336,94 @@ SELECT mdate,
   FROM game LEFT JOIN goal ON matchid = id
   GROUP BY mdate, matchid, team1, team2
   ORDER BY mdate, matchid, team1, team2;
+
+-- More JOIN operations
+
+-- 1962 movies
+SELECT id, title
+FROM movie
+WHERE yr=1962;
+
+-- When was Citizen Kane released?
+SELECT yr
+FROM movie
+WHERE title = 'Citizen Kane';
+
+-- Star Trek movies
+SELECT id, title, yr
+FROM movie
+WHERE title LIKE 'Star Trek%';
+
+-- id for actor Glenn Close
+SELECT id
+FROM actor
+WHERE name = 'Glenn Close';
+
+-- id for Casablanca
+SELECT id
+FROM movie
+WHERE title = 'Casablanca';
+
+-- Cast list for Casablanca
+SELECT actor.name
+FROM actor JOIN casting ON actor.id=casting.actorid
+WHERE casting.movieid = 27;
+
+-- Alien cast list
+SELECT actor.name
+FROM actor
+JOIN casting ON actor.id=casting.actorid
+WHERE casting.movieid=(SELECT id FROM movie WHERE title = 'Alien');
+
+-- Harrison Ford movies
+SELECT movie.title
+FROM movie JOIN casting ON movie.id = casting.movieid
+WHERE casting.actorid=(SELECT id FROM actor WHERE name = 'Harrison Ford');
+
+-- Harrison Ford as a supporting character
+SELECT movie.title
+FROM movie JOIN casting ON movie.id = casting.movieid
+WHERE casting.actorid=(SELECT id FROM actor WHERE name = 'Harrison Ford') AND casting.ord>1;
+
+-- Lead actors in 1962 movies
+SELECT movie.title, actor.name
+FROM movie JOIN casting ON movie.id = casting.movieid
+JOIN actor ON actor.id=casting.actorid
+WHERE movie.yr=1962 AND casting.ord=1;
+
+-- Busy years for Rock Hudson
+SELECT movie.yr, COUNT(movie.title) FROM
+  movie JOIN casting ON movie.id=movieid
+        JOIN actor   ON actorid=actor.id
+WHERE actor.name='Rock Hudson'
+GROUP BY yr
+HAVING COUNT(movie.title) > 2;
+
+-- Lead actor in Julie Andrews movies
+SELECT title, name FROM movie
+JOIN casting x ON movie.id = movieid
+JOIN actor ON actor.id =actorid
+WHERE ord=1 AND movieid IN
+(SELECT movieid FROM casting y
+JOIN actor ON actor.id=actorid
+WHERE name='Julie Andrews');
+
+-- Actors with 15 leading roles
+SELECT name
+FROM actor JOIN casting ON (actor.id = actorid AND (SELECT COUNT(ord)
+       FROM casting y
+       WHERE actorid = actor.id AND ord=1) >= 15)
+GROUP BY name;
+
+-- 14
+SELECT title, COUNT(actorid) AS cast
+FROM movie JOIN casting ON movie.id=casting.movieid
+WHERE yr=1978
+GROUP BY title
+ORDER BY cast DESC, title;
+
+-- 15
+SELECT name
+FROM actor JOIN casting ON actor.id=casting.actorid
+WHERE movieid IN (SELECT movieid FROM casting JOIN actor ON actor.id = casting.actorid 
+AND actor.name = 'Art Garfunkel') AND name!='Art Garfunkel';
